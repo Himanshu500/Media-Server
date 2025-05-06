@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aura Video Stream - Playlist</title>
+    <style>
+        /* --- Aura/Neon Theme --- */
+        :root {
+            --neon-blue: #00c6ff;
+            --neon-pink: #ff00c8;
+            --aura-purple: #4a00e0;
+            --aura-mid: #8e2de2;
+            --bg-dark: #1a1a2e;
+            --text-light: #e0e0ff;
+            --text-muted: #a0a0c0;
+            --panel-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --active-glow: var(--neon-blue);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: clamp(10px, 4vw, 30px);
+            background: linear-gradient(135deg, var(--aura-purple), var(--aura-mid), var(--bg-dark));
+            background-attachment: fixed;
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: clamp(15px, 5vw, 30px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 6vw, 2.5rem);
+            margin-bottom: 0.8em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.6em;
+            text-shadow: 0 0 7px var(--neon-blue), 0 0 15px var(--neon-blue), 0 0 20px var(--neon-blue);
+            animation: neon-flicker-blue 2.5s infinite alternate;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: clamp(1.2rem, 4vw, 1.6rem);
+            margin-bottom: 1em;
+            padding-bottom: 0.5em;
+            text-shadow: 0 0 5px var(--neon-pink), 0 0 10px var(--neon-pink);
+            animation: neon-flicker 3s infinite alternate;
+            word-break: break-word;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h3 {
+            font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+            margin-bottom: 15px;
+            text-shadow: 0 0 5px var(--neon-blue);
+            color: var(--text-light);
+        }
+
+        .main-content-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: clamp(15px, 3vw, 30px);
+        }
+
+        .video-and-actions-column {
+            flex: 3;
+            min-width: 300px; /* Ensure it doesn't get too squished */
+            display: flex;
+            flex-direction: column;
+            gap: clamp(15px, 3vw, 20px);
+        }
+
+        .playlist-column {
+            flex: 1.2;
+            min-width: 280px;
+            max-height: 70vh; /* Limit height if too many videos */
+            overflow-y: auto;
+            padding-right: 10px; /* For scrollbar */
+        }
+
+        .playlist-panel {
+            padding: clamp(12px, 4vw, 20px);
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            height: 100%; /* Fill column */
+        }
+
+        #video-playlist-items {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #video-playlist-items li {
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            word-break: break-word;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+        }
+
+        #video-playlist-items li:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--neon-pink);
+        }
+
+        #video-playlist-items li.active-video {
+            background-color: rgba(0, 198, 255, 0.15); /* Neon blue accent */
+            border-color: var(--active-glow);
+            color: var(--text-light);
+            font-weight: bold;
+            box-shadow: 0 0 8px var(--active-glow), inset 0 0 5px rgba(0, 198, 255, 0.2);
+        }
+
+        .video-container {
+            margin: 0;
+            background: #000;
+            border-radius: 8px;
+            /* overflow: hidden; */ /* Commented out to test if it fixes controls */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            aspect-ratio: 16 / 9;
+        }
+        video {
+            width: 100%;
+            height: 100%; /* Fill container */
+            display: block;
+            border: none;
+        }
+        /* video::-webkit-media-controls { transform-origin: bottom; transform: scale(1.0); } */ /* Rule removed for testing */
+
+        .info-panel, .action-panel {
+            margin-top: 0; /* Handled by flex gap */
+            padding: clamp(12px, 4vw, 20px);
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .info-row { display: flex; flex-wrap: wrap; margin-bottom: 8px; }
+        .info-label { font-weight: bold; color: var(--text-muted); min-width: 100px; margin-right: 10px; }
+        .info-value { flex: 1; min-width: 150px; word-break: break-all; }
+        .action-panel a {
+            display: inline-block;
+            padding: clamp(10px, 2.5vw, 15px) clamp(15px, 4vw, 25px);
+            margin: 10px 15px 10px 0;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-blue));
+            color: white; text-decoration: none; border-radius: 5px; font-weight: bold; border: none;
+            cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 0 5px var(--neon-pink), 0 0 10px var(--neon-pink), inset 0 0 5px rgba(255,255,255,0.3);
+            animation: neon-pulse 1.5s infinite alternate;
+            font-size: clamp(0.9rem, 2.8vw, 1rem);
+            text-align: center;
+        }
+        .action-panel a:hover, .action-panel a:active { 
+            box-shadow: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink), 0 0 30px var(--neon-blue), inset 0 0 10px rgba(255,255,255,0.5);
+            transform: translateY(-2px);
+        }
+        .action-panel p { font-size: clamp(0.8rem, 2.5vw, 0.9rem); color: var(--text-muted); margin-top: 10px; }
+        .warning, #player-error-message p.warning { color: #ffcc00; background-color: rgba(255,204,0,0.1); border:1px solid rgba(255,204,0,0.5); padding:15px; border-radius:4px; margin-top:15px; font-weight:bold; }
+        #player-error-message { display: none; padding: 20px; text-align: center; }
+        #player-error-message p { margin-bottom: 15px; }
+        code { background-color:rgba(255,255,255,0.1); padding:3px 6px; border-radius:3px; color:var(--neon-blue); font-family:Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace; word-break:break-all; font-size:clamp(0.85rem,2.5vw,0.95rem); }
+        a { color:var(--neon-blue); text-decoration:none; } a:hover { text-decoration:underline; color:var(--neon-pink); }
+
+        /* Scrollbar styling for playlist (Webkit) */
+        .playlist-column::-webkit-scrollbar { width: 8px; }
+        .playlist-column::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        .playlist-column::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 4px; }
+        .playlist-column::-webkit-scrollbar-thumb:hover { background: var(--neon-pink); }
+
+        /* --- Animations --- */
+        @keyframes neon-flicker {
+            0%, 100% { text-shadow: 0 0 5px var(--neon-pink), 0 0 10px var(--neon-pink), 0 0 15px var(--neon-pink); opacity: 1; }
+            50% { text-shadow: 0 0 8px var(--neon-pink), 0 0 18px var(--neon-pink); opacity: 0.8; }
+        }
+        
+        @keyframes neon-flicker-blue {
+            0%, 100% { text-shadow: 0 0 7px var(--neon-blue), 0 0 15px var(--neon-blue), 0 0 20px var(--neon-blue); opacity: 1; }
+            50% { text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue); opacity: 0.7; }
+        }
+
+        @keyframes neon-pulse {
+            from {
+                box-shadow: 0 0 5px var(--neon-pink), 0 0 10px var(--neon-pink), inset 0 0 5px rgba(255,255,255,0.3);
+            }
+            to {
+                box-shadow: 0 0 10px var(--neon-pink), 0 0 15px var(--neon-blue), inset 0 0 8px rgba(255,255,255,0.4);
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) { /* Tablet and below */
+            .main-content-area {
+                flex-direction: column;
+            }
+            .playlist-column {
+                order: -1; /* Move playlist to top on smaller screens */
+                max-height: 30vh; /* Shorter playlist on mobile */
+                min-width: unset; /* Allow full width */
+                width: 100%;
+            }
+            .video-and-actions-column {
+                min-width: unset; /* Allow full width */
+                width: 100%;
+            }
+        }
+        @media (max-width: 768px) {
+            .info-row { flex-direction: column; }
+            .info-label { margin-bottom: 5px; }
+            .info-value { padding-left: 0; }
+            .action-panel a { display: block; width: 95%; margin: 10px auto; }
+        }
+        @media (max-width: 480px) { /* Phone */
+            body { padding: 8px; }
+            .container { padding: 12px; border-radius: 10px; }
+            h1, h2, h3 { text-align: center; }
+            .video-container { margin: 10px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Aura Video Stream</h1>
+        <h2 id="now-streaming-title">No Video Selected</h2>
+        
+        <div class="main-content-area">
+            <div class="video-and-actions-column">
+                <!-- Placeholder for error message -->
+                <div id="player-error-message"></div>
+                <div class="video-container" id="video-container">
+                    <video id="videoPlayer" controls autoplay preload="metadata">
+                        <!-- Source will be set by JavaScript -->
+                         Your browser does not support the video tag.
+                    </video>
+                </div>
+
+                <div class="action-panel" id="action-panel">
+                    <h3>Stream Actions</h3>
+                    <a id="vlc-link" href="#" title="Attempts to open the stream directly in VLC">Open in VLC App</a>
+                    <p>(Requires VLC to be installed and registered to handle <code>vlc://</code> links on your system)</p>
+                </div>
+                
+                <div class="info-panel" id="info-panel-content">
+                    <h3>Video Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">File:</span> 
+                        <span class="info-value" id="info-filename">N/A</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Resolution:</span>
+                        <span class="info-value" id="info-resolution">N/A</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Duration:</span>
+                        <span class="info-value" id="info-duration">N/A</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">FPS:</span>
+                        <span class="info-value" id="info-fps">N/A</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Mime Type:</span>
+                        <span class="info-value" id="info-mime">N/A</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Stream URL:</span>
+                        <span class="info-value" id="info-stream-url"><code>N/A</code></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="playlist-column">
+                <div class="playlist-panel">
+                    <h3>Video Playlist</h3>
+                    {% if videos and videos|length > 0 %}
+                        <ul id="video-playlist-items">
+                            <!-- Playlist items will be populated by JavaScript -->
+                        </ul>
+                    {% else %}
+                        <p>No videos found in the loaded directory.</p>
+                        <p>Please restart the server (<code>python cli.py</code>) and select a directory containing video files.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Data passed from Flask template
+        const videoFilenames = {{ videos | tojson | safe }};
+        const serverIp = {{ server_ip | tojson | safe }};
+        const serverPort = window.location.port; // Get port from current URL
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoPlayer = document.getElementById('videoPlayer');
+            const videoContainer = document.getElementById('video-container');
+            const playerErrorMessage = document.getElementById('player-error-message');
+            const vlcLink = document.getElementById('vlc-link');
+            const nowStreamingTitle = document.getElementById('now-streaming-title');
+            const playlistUl = document.getElementById('video-playlist-items');
+            
+            // Info panel elements
+            const infoFilename = document.getElementById('info-filename');
+            const infoResolution = document.getElementById('info-resolution');
+            const infoDuration = document.getElementById('info-duration');
+            const infoFps = document.getElementById('info-fps');
+            const infoMime = document.getElementById('info-mime');
+            const infoStreamUrl = document.getElementById('info-stream-url');
+
+            let currentSelectedFilename = null;
+
+            function buildPlaylist() {
+                if (!playlistUl || !videoFilenames || videoFilenames.length === 0) {
+                    console.warn("Playlist UL element not found or no video filenames provided.");
+                    if(playlistUl) playlistUl.innerHTML = '<li>No videos available.</li>'; 
+                    return;
+                }
+                playlistUl.innerHTML = ''; // Clear existing items
+
+                videoFilenames.forEach(filename => {
+                    const li = document.createElement('li');
+                    li.textContent = filename;
+                    li.dataset.filename = filename; // Store filename for easy access
+                    li.addEventListener('click', () => {
+                        selectVideo(filename);
+                    });
+                    playlistUl.appendChild(li);
+                });
+            }
+
+            async function fetchVideoInfo(filename) {
+                clearVideoInfo(); // Clear previous info first
+                if (!filename) return;
+
+                try {
+                    const response = await fetch(`/api/video_info/${encodeURIComponent(filename)}`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    
+                    infoFilename.innerHTML = `<code>${data.filename || 'N/A'}</code>`;
+                    infoResolution.textContent = (data.width && data.height) ? `${data.width} x ${data.height}` : 'N/A';
+                    infoDuration.textContent = data.duration ? `${parseFloat(data.duration).toFixed(2)} seconds` : 'N/A';
+                    infoFps.textContent = data.fps ? `${parseFloat(data.fps).toFixed(2)}` : 'N/A';
+                    infoMime.textContent = data.mime_type || 'N/A';
+                    
+                    const streamUrlForInfo = `/stream/${encodeURIComponent(filename)}`;
+                    infoStreamUrl.innerHTML = `<a href="${streamUrlForInfo}" target="_blank"><code>${streamUrlForInfo}</code></a>`;
+
+                } catch (error) {
+                    console.error("Error fetching video info:", error);
+                    infoFilename.textContent = "Error loading data";
+                }
+            }
+
+            function clearVideoInfo() {
+                infoFilename.innerHTML = `<code>N/A</code>`;
+                infoResolution.textContent = 'N/A';
+                infoDuration.textContent = 'N/A';
+                infoFps.textContent = 'N/A';
+                infoMime.textContent = 'N/A';
+                infoStreamUrl.innerHTML = `<code>N/A</code>`;
+            }
+
+            function selectVideo(filename) {
+                if (!filename) return;
+                currentSelectedFilename = filename;
+
+                console.log(`Selecting video: ${filename}`);
+                nowStreamingTitle.textContent = `Now Streaming: ${filename}`;
+
+                // Update video player source
+                const videoSourceUrl = `/stream/${encodeURIComponent(filename)}`;
+                
+                // Clear previous source elements if any
+                while (videoPlayer.firstChild) {
+                    videoPlayer.removeChild(videoPlayer.firstChild);
+                }
+                const sourceElement = document.createElement('source');
+                sourceElement.setAttribute('src', videoSourceUrl);
+                
+                // Get mime type from filename extension as a basic guess, or use a common default
+                let mimeType = 'video/mp4'; // Default
+                const fileExtension = filename.split('.').pop().toLowerCase();
+                if (fileExtension === 'mkv') {
+                    mimeType = 'video/x-matroska';
+                } else if (fileExtension === 'webm') {
+                    mimeType = 'video/webm';
+                } else if (fileExtension === 'mov') {
+                    mimeType = 'video/quicktime';
+                } // Add other common types if needed for better browser hints
+                
+                sourceElement.setAttribute('type', mimeType);
+                videoPlayer.appendChild(sourceElement);
+                
+                videoPlayer.load(); // Important: load the new source
+                videoPlayer.play().catch(error => {
+                    console.warn("Autoplay prevented or failed:", error); 
+                    // The main error handler should catch if the format is unsupported
+                });
+                
+                // Reset error message display
+                playerErrorMessage.style.display = 'none';
+                videoContainer.style.display = 'block';
+
+                // Update VLC link
+                const fullStreamUrlForVlc = `http://${serverIp || '127.0.0.1'}:${serverPort}/stream/${encodeURIComponent(filename)}`;
+                vlcLink.href = `vlc://${fullStreamUrlForVlc}`;
+
+                // Fetch and display new video info
+                fetchVideoInfo(filename);
+
+                // Update active class in playlist
+                if (playlistUl) {
+                    Array.from(playlistUl.children).forEach(li => {
+                        li.classList.remove('active-video');
+                        if (li.dataset.filename === filename) {
+                            li.classList.add('active-video');
+                        }
+                    });
+                }
+            }
+
+            function handlePlayerError(e) {
+                console.error("HTML5 Video Error Event:", e);
+                if(videoPlayer.error) {
+                    console.error("MediaError Code:", videoPlayer.error.code, "Message:", videoPlayer.error.message);
+                }
+                videoContainer.style.display = 'none';
+                let errorReason = videoPlayer.error ? `(Code: ${videoPlayer.error.code})` : '(Format likely unsupported)';
+                playerErrorMessage.innerHTML = 
+                    `<p class="warning">Browser cannot play this video ${errorReason}.</p>` +
+                    `<p>Please use the "Open in VLC App" link, or try another video from the playlist.</p>`;
+                playerErrorMessage.style.display = 'block';
+                if (vlcLink) {
+                    vlcLink.style.fontWeight = 'bold';
+                    vlcLink.style.fontSize = '1.1em';
+                }
+            }
+
+            if (videoPlayer) {
+                videoPlayer.addEventListener('error', handlePlayerError);
+            }
+
+            // Initial setup
+            buildPlaylist();
+            if (videoFilenames && videoFilenames.length > 0) {
+                selectVideo(videoFilenames[0]); // Select and load the first video by default
+            } else {
+                nowStreamingTitle.textContent = "No Videos Loaded";
+                clearVideoInfo();
+                infoFilename.textContent = "No videos found in the loaded directory.";
+                 if (vlcLink) vlcLink.style.display = 'none'; // Hide VLC link if no videos
+            }
+
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Stream Server - No Video</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f8f9fa; color: #333; line-height: 1.6; text-align: center;}
+        .container { max-width: 700px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+        h1 { color: #dc3545; }
+         code { background-color: #e9ecef; padding: 2px 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Server Ready, But No Video Selected</h1>
+        <p>The streaming server is running{% if port %} on port <strong>{{ port }}</strong>{% endif %}.</p>
+        <p>However, no video file was specified when the server was started.</p>
+        <p>Please stop this server (Ctrl+C in the console) and restart it using the interactive mode:</p>
+        <p><code>python cli.py</code></p>
+        <p>It will then prompt you to select a video file.</p>
+    </div>
+</body>
+</html> 
