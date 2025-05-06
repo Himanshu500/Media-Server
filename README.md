@@ -34,11 +34,10 @@ python main.py
 ## Requirements
 
 - Python 3.7+
-- PyQt6
+- tinkter
 - Flask
-- OpenCV
 - Network connection
-- **ffmpeg**: Must be installed and accessible in the system PATH for HLS streaming.
+
 
 ## License
 
